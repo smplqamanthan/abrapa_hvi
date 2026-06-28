@@ -142,3 +142,18 @@ body{
     padding: 12px;
     border-radius: 8px;
 }
+
+/* Progress container styling - make it stand out when running */
+.progress-container {
+    box-shadow: 0 2px 8px rgba(13, 110, 253, 0.15);
+    animation: progressPulse 2s ease-in-out infinite;
+}
+
+@keyframes progressPulse {
+    0%, 100% {
+        box-shadow: 0 2px 8px rgba(13, 110, 253, 0.15);
+    }
+    50% {
+        box-shadow: 0 2px 12px rgba(13, 110, 253, 0.25);
+    }
+}

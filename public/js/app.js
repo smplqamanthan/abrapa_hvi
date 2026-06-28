@@ -1,5 +1,7 @@
 ﻿let FIELD_CONFIG = {};
 let currentUploadToken = null;
+let currentSessionId = null;
+let currentTokens = null;
 
 function renderColumnManager() {
     const groups = {};
@@ -49,8 +51,16 @@ function renderColumnManager() {
 
 function resetUploadState() {
     currentUploadToken = null;
-    $("#downloadExcelBtn").hide().removeData("token");
+    currentSessionId = null;
+    currentTokens = null;
+    $("#progressContainer").hide();
+    $("#downloadsSection").hide();
+    $("#progressBar").css("width", "0%").attr("aria-valuenow", "0");
+    $("#progressPercentage").text("0%");
+    $("#progressCount").text("0");
+    $("#progressTotal").text("0");
     $("#uploadStatus").text("");
+    $("#downloadList").empty();
 }
 
 function isMobileDownloadContext() {
@@ -105,6 +115,88 @@ async function downloadJsonFile(url, payload, filename) {
     });
 
     return downloadBlobResponse(response, filename);
+}
+
+// Poll progress
+async function pollProgress(sessionId, onComplete) {
+    let pollInterval;
+    let tokensRetrieved = false;
+    const startTime = Date.now();
+    
+    return new Promise((resolve) => {
+        pollInterval = setInterval(async () => {
+            try {
+                const response = await fetch(`/upload/progress/${sessionId}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    const { processed, total, percentage, isComplete, tokens, totalChunks } = result;
+                    $("#progressBar").css("width", percentage + "%").attr("aria-valuenow", percentage);
+                    $("#progressPercentage").text(percentage + "%");
+                    $("#progressCount").text(processed);
+                    $("#progressTotal").text(total);
+                    
+                    // Update elapsed time and estimate remaining time
+                    const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+                    let statusMsg = `Fetching HVI data for bales...`;
+                    if (percentage > 0) {
+                        const estimatedRemaining = Math.round((elapsedSeconds / percentage) * (100 - percentage));
+                        statusMsg = `Processing: ${processed}/${total} bales (${estimatedRemaining}s remaining)`;
+                    }
+                    $("#uploadStatus").text(statusMsg);
+
+                    // When processing is complete and we have tokens
+                    if (isComplete && tokens && !tokensRetrieved) {
+                        tokensRetrieved = true;
+                        currentTokens = tokens;
+                        clearInterval(pollInterval);
+                        if (onComplete) onComplete(tokens, total, totalChunks);
+                        resolve();
+                    }
+                }
+            } catch (err) {
+                console.error("Progress polling error:", err);
+            }
+        }, 200);
+
+        // Timeout after 10 minutes
+        setTimeout(() => {
+            clearInterval(pollInterval);
+            resolve();
+        }, 10 * 60 * 1000);
+    });
+}
+
+function displayDownloadLinks(tokens, totalBales) {
+    const $list = $("#downloadList").empty();
+
+    tokens.forEach((token, index) => {
+        const $item = $(`
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>Part ${token.chunkIndex}</strong>
+                    <span class="badge bg-info ms-2">${token.count} rows</span>
+                    <small class="text-muted d-block">Rows ${token.startRow} - ${token.endRow}</small>
+                </div>
+                <button class="btn btn-sm btn-success part-download-btn" data-token="${token.token}" data-index="${token.chunkIndex}">
+                    <i class="bi bi-download"></i> Download
+                </button>
+            </div>
+        `);
+
+        $item.find(".part-download-btn").click(function () {
+            const btnToken = $(this).data("token");
+            const chunkIndex = $(this).data("index");
+            downloadFile(`/download/results/${btnToken}`, `abrapa-results-part-${chunkIndex}.xlsx`).catch(err => {
+                console.error(err);
+                alert(err.message);
+            });
+        });
+
+        $list.append($item);
+    });
+
+    $("#downloadsSection").show();
 }
 
 $(document).ready(async function () {
@@ -238,8 +330,9 @@ $(document).ready(async function () {
 
         const btn = $(this);
         btn.prop("disabled", true).html("Uploading...");
-        $("#uploadStatus").text("Processing uploaded file...");
         resetUploadState();
+        $("#progressContainer").show();
+        $("#uploadStatus").text("Submitting file for processing...");
 
         try {
             const response = await fetch("/upload/template", {
@@ -249,34 +342,58 @@ $(document).ready(async function () {
 
             const result = await response.json();
             if (!result.success) {
-                $("#uploadStatus").text(result.message || "Upload failed.");
+                $("#uploadStatus").html(`<div class="alert alert-danger mb-0"><i class="bi bi-exclamation-triangle"></i> ${result.message || "Upload failed."}</div>`);
+                $("#progressContainer").hide();
                 return;
             }
 
-            currentUploadToken = result.token;
-            $("#downloadExcelBtn").show().data("token", result.token);
-            $("#uploadStatus").text(`${result.count} bale(s) processed. Click Download Excel to download results.`);
+            currentSessionId = result.sessionId;
+            const totalBales = result.totalBales;
+            const totalChunks = result.totalChunks;
+
+            // Initialize progress display
+            $("#progressBar").css("width", "0%").attr("aria-valuenow", "0");
+            $("#progressPercentage").text("0%");
+            $("#progressCount").text("0");
+            $("#progressTotal").text(totalBales);
+            $("#uploadStatus").text("Processing started. Please wait...");
+
+            // Start polling progress and wait for completion
+            await pollProgress(currentSessionId, (tokens, total, chunks) => {
+                displayDownloadLinks(tokens, total);
+                $("#uploadStatus").html(`<div class="alert alert-success mb-0"><i class="bi bi-check-circle"></i> Successfully processed ${total} bale(s) in ${chunks} part(s). Download individual parts below or use "Download All Parts".</div>`);
+                $("#progressContainer").hide();
+            });
         } catch (err) {
             console.error(err);
-            $("#uploadStatus").text("Upload failed. Please try again.");
+            $("#uploadStatus").html(`<div class="alert alert-danger mb-0"><i class="bi bi-exclamation-triangle"></i> Upload failed: ${err.message}</div>`);
+            $("#progressContainer").hide();
         } finally {
             btn.prop("disabled", false).html("Upload Template");
         }
     });
 
-    $("#downloadExcelBtn").click(async function () {
-        const token = $(this).data("token") || currentUploadToken;
-        if (!token) {
-            $("#uploadStatus").text("No processed data available for download.");
+    $("#downloadAllBtn").click(async function () {
+        if (!currentTokens || currentTokens.length === 0) {
+            alert("No parts available for download.");
             return;
         }
 
+        const btn = $(this);
+        btn.prop("disabled", true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Downloading...');
+
         try {
-            await downloadFile(`/download/results/${token}`, `abrapa-results-${Date.now()}.xlsx`);
-            $("#uploadStatus").text("Excel download started.");
+            for (const token of currentTokens) {
+                await downloadFile(`/download/results/${token.token}`, `abrapa-results-part-${token.chunkIndex}.xlsx`);
+                // Add a small delay between downloads to prevent overwhelming the browser
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            $("#uploadStatus").html(`<div class="alert alert-success mb-0">✓ Downloaded all ${currentTokens.length} part(s).</div>`);
         } catch (err) {
             console.error(err);
-            $("#uploadStatus").text(err.message);
+            $("#uploadStatus").text("Error downloading files: " + err.message);
+        } finally {
+            btn.prop("disabled", false).html("Download All Parts");
         }
     });
 });
