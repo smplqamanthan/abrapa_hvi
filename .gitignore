@@ -1,0 +1,28 @@
+# Node dependencies
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+temp/
+uploads/
+.DS_Store
+.env
+.env.local
+.env.*.local
+
+# Build output
+coverage/
+
+# Editor files
+.vscode/
+.idea/
+*.suo
+*.ntvs_analysis.dat
+*.njsproj
+*.sln

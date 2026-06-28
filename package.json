@@ -1,0 +1,30 @@
+{
+  "name": "abrapa-hvi",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "axios": "^1.18.1",
+    "cors": "^2.8.6",
+    "csv-parser": "^3.2.1",
+    "exceljs": "^4.4.0",
+    "express": "^5.2.1",
+    "multer": "^2.2.0",
+    "node-cache": "^5.1.2",
+    "tabulator-tables": "^6.5.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}

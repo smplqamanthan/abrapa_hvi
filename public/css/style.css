@@ -1,0 +1,144 @@
+body{
+    background:#f4f4f4;
+}
+
+.card{
+    border-radius:10px;
+}
+
+#resultTable {
+    width: 100%;
+}
+
+.mobile-result-scroll {
+    max-height: min(70vh, 650px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.mobile-transposed-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.mobile-transposed-table th,
+.mobile-transposed-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #e9ecef;
+    vertical-align: top;
+}
+
+.mobile-transposed-table thead th {
+    background: #f8f9fa;
+    font-weight: 600;
+    text-align: left;
+}
+
+.mobile-transposed-table tbody th {
+    width: 42%;
+    background: #f8f9fa;
+    font-weight: 600;
+    text-align: left;
+    white-space: normal;
+}
+
+.mobile-transposed-table tbody td {
+    width: 58%;
+    word-break: break-word;
+    white-space: normal;
+}
+
+.mobile-empty-state {
+    padding: 16px;
+    color: #6c757d;
+    text-align: center;
+    background: #fff;
+    border: 1px dashed #dee2e6;
+    border-radius: 8px;
+}
+
+.tabulator{
+    font-size:13px;
+}
+
+.tabulator-header{
+    font-weight:bold;
+}
+
+.tabulator-cell{
+    white-space:nowrap;
+}
+
+.cm-group {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    background: #fff;
+}
+
+.cm-group-header {
+    padding: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    background: #f8f9fa;
+    user-select: none;
+}
+
+.cm-group-header:hover {
+    background: #e9ecef;
+}
+
+.arrow {
+    font-size: 14px;
+    width: 20px;
+}
+
+.cm-group-body {
+    padding: 10px 15px;
+}
+
+.cm-item {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+/* Colored tabs: make Single Bale (primary) and Upload (warning) visually distinct */
+.nav-link#single-tab {
+    background: #0d6efd33; /* light primary tint when inactive */
+    color: #0d6efd;
+    border-radius: 0.5rem;
+}
+.nav-link#single-tab.active {
+    background: #0d6efd; /* solid primary when active */
+    color: #fff;
+}
+
+.nav-link#upload-tab {
+    background: #ffc10733; /* light warning tint when inactive */
+    color: #856404;
+    border-radius: 0.5rem;
+}
+.nav-link#upload-tab.active {
+    background: #ffc107; /* solid warning when active */
+    color: #212529;
+}
+
+/* Slightly tint the tab content areas to match their tab button */
+.tab-pane#singleTab {
+    background: #e9f2ff; /* very light blue */
+    padding: 12px;
+    border-radius: 8px;
+}
+.tab-pane#uploadTab {
+    background: #fff6e0; /* very light yellow */
+    padding: 12px;
+    border-radius: 8px;
+}

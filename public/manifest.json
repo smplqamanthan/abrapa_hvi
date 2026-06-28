@@ -1,0 +1,21 @@
+{
+  "name": "ABRAPA Bale HVI Results",
+  "short_name": "ABRAPA HVI",
+  "description": "Search bale HVI results and download Excel reports.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0d6efd",
+  "icons": [
+    {
+      "src": "/icons/icon.png",
+      "type": "image/png",
+      "sizes": "128x128"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ]
+}
